@@ -23,13 +23,14 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
 @Service
 @Slf4j
-@EnableScheduling
+/*@EnableScheduling*/
 public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
@@ -94,30 +95,33 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public Paged<Transaction> getAll(int pageNum, int pageSize) {
-        PageRequest request = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "dateCreated"));
+    public Paged<Transaction> getAll(int pageNum, int pageSize, String sortField, String sortDir) {
+        PageRequest request = PageRequest.of(pageNum - 1, pageSize, sortDir.equals("asc") ? Sort.by(sortField).ascending()
+                : Sort.by(sortField).descending());
         Page<Transaction> postPage = transactionRepository.findAll(request);
 
         return new Paged<>(postPage, Paging.of(postPage.getTotalPages(), pageNum, pageSize));
     }
 
     @Override
-    public Paged<Transaction> getAllBySender(String sender, int pageNum, int pageSize) {
+    public Paged<Transaction> getAllBySender(String sender, int pageNum, int pageSize, String sortField, String sortDir) {
         User sender1 = userRepository.findByUsername(sender)
                 .orElseThrow(() -> new RuntimeException());
 
-        PageRequest request = PageRequest.of(pageNum - 1, pageSize);
-        Page<Transaction> postPage = transactionRepository.findAllByUserSenderOrderByDateCreatedDesc(sender1, request);
+        PageRequest request = PageRequest.of(pageNum - 1, pageSize, sortDir.equals("asc") ? Sort.by(sortField).ascending()
+                : Sort.by(sortField).descending());
+        Page<Transaction> postPage = transactionRepository.findAllByUserSender(sender1, request);
         return new Paged<>(postPage, Paging.of(postPage.getTotalPages(), pageNum, pageSize));
     }
 
     @Override
-    public Paged<Transaction> getAllByReceiver(String receiver, int pageNum, int pageSize) {
+    public Paged<Transaction> getAllByReceiver(String receiver, int pageNum, int pageSize, String sortField, String sortDir) {
         User receiver1 = userRepository.findByUsername(receiver)
                 .orElseThrow(() -> new RuntimeException());
 
-        PageRequest request = PageRequest.of(pageNum - 1, pageSize);
-        Page<Transaction> postPage = transactionRepository.findAllByUserReceiverOrderByDateCreatedDesc(receiver1, request);
+        PageRequest request = PageRequest.of(pageNum - 1, pageSize, sortDir.equals("asc") ? Sort.by(sortField).ascending()
+                : Sort.by(sortField).descending());
+        Page<Transaction> postPage = transactionRepository.findAllByUserReceiver(receiver1, request);
         return new Paged<>(postPage, Paging.of(postPage.getTotalPages(), pageNum, pageSize));
     }
 
@@ -141,6 +145,11 @@ public class TransactionServiceImpl implements TransactionService {
                     return transactionRepository.save(transaction1);
                 })
                 .orElseThrow(() -> new RuntimeException("Такой транзакции не существует"));
+    }
+
+    @Override
+    public Long getStatistics(LocalDate date1, LocalDate date2) {
+        return transactionRepository.countByDateBetween(date1, date2);
     }
 
     @Scheduled(cron = "0 * * * * *")
