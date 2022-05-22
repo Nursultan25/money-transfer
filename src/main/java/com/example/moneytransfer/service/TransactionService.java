@@ -1,6 +1,8 @@
 package com.example.moneytransfer.service;
 
 import com.example.moneytransfer.entity.Transaction;
+import com.example.moneytransfer.paging.Paged;
+import com.example.moneytransfer.request.RefreshTransactionRequest;
 import com.example.moneytransfer.request.SendTransactionRequest;
 import org.springframework.stereotype.Service;
 
@@ -13,11 +15,13 @@ public interface TransactionService {
 
     Transaction update(Long id, String newStatus);
 
-    List<Transaction> getAll();
+    Paged<Transaction> getAll(int pageNum, int pageSize);
 
-    List<Transaction> getAllBySender(String sender);
+    Paged<Transaction> getAllBySender(String sender, int pageNum, int pageSize);
 
-    List<Transaction> getAllByReceiver(String receiver);
+    Paged<Transaction> getAllByReceiver(String receiver, int pageNum, int pageSize);
 
     Transaction receive(String code);
+
+    Transaction refresh(RefreshTransactionRequest request);
 }

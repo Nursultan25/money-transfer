@@ -37,6 +37,7 @@ public class Transaction {
 
     private BigDecimal amount;
 
+    @Column(length = 355)
     private String description;
 
     @JsonIgnore

@@ -1,17 +1,14 @@
 package com.example.moneytransfer.controller;
 
-import com.example.moneytransfer.entity.Transaction;
+import com.example.moneytransfer.request.RefreshTransactionRequest;
 import com.example.moneytransfer.request.SendTransactionRequest;
 import com.example.moneytransfer.request.UpdateStatusRequest;
 import com.example.moneytransfer.service.TransactionService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.keycloak.KeycloakSecurityContext;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.ServletException;
@@ -27,9 +24,11 @@ public class MainController {
 
     @RolesAllowed("USER_ROLE")
     @GetMapping("/")
-    public String sendPage(Model model) {
+    public String sendPage(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
+                           @RequestParam(value = "size", required = false, defaultValue = "6") int size, Model model) {
         model.addAttribute("sendTrReq", new SendTransactionRequest());
-        return sent(model);
+        model.addAttribute("refreshReq", new RefreshTransactionRequest());
+        return sent(pageNumber, size, model);
     }
 
     @PostMapping("/sendForm")
@@ -38,18 +37,25 @@ public class MainController {
         return "redirect:/";
     }
 
-    @GetMapping("/received")
-    public String received(Model model) {
-        configCommonAttributes(model);
+    @PostMapping("/refresh")
+    public String refreshTransaction(@Valid @ModelAttribute RefreshTransactionRequest refreshReq) {
+        transactionService.refresh(refreshReq);
+        return "redirect:/";
+    }
 
-        model.addAttribute("transactions", transactionService.getAllByReceiver(getKeycloakSecurityContext().getToken().getPreferredUsername()));
+    @GetMapping("/received")
+    public String received(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
+                           @RequestParam(value = "size", required = false, defaultValue = "6") int size, Model model) {
+        configCommonAttributes(model);
+        model.addAttribute("transactions", transactionService.getAllByReceiver(getKeycloakSecurityContext().getToken().getPreferredUsername(), pageNumber, size));
         return "transactions-received";
     }
 
     @GetMapping("/sent")
-    public String sent(Model model) {
+    public String sent(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
+                       @RequestParam(value = "size", required = false, defaultValue = "6") int size, Model model) {
         configCommonAttributes(model);
-        model.addAttribute("transactions", transactionService.getAllBySender(getKeycloakSecurityContext().getToken().getPreferredUsername()));
+        model.addAttribute("transactions", transactionService.getAllBySender(getKeycloakSecurityContext().getToken().getPreferredUsername(), pageNumber, size));
         return "transactions-sent";
     }
 
@@ -61,10 +67,11 @@ public class MainController {
 
     @RolesAllowed("ADMIN_ROLE")
     @GetMapping("/admin-console")
-    public String getAllTransactions(Model model) {
+    public String getAllTransactions(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
+                                     @RequestParam(value = "size", required = false, defaultValue = "6") int size, Model model) {
         configCommonAttributes(model);
         model.addAttribute("request", new UpdateStatusRequest());
-        model.addAttribute("transactions", transactionService.getAll());
+        model.addAttribute("transactions", transactionService.getAll(pageNumber, size));
         return "admin-console";
     }
 

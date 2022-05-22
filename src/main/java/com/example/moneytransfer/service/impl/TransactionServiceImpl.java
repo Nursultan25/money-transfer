@@ -4,20 +4,32 @@ import com.example.moneytransfer.Enums.Currency;
 import com.example.moneytransfer.Enums.Status;
 import com.example.moneytransfer.entity.Transaction;
 import com.example.moneytransfer.entity.User;
+import com.example.moneytransfer.paging.Paged;
+import com.example.moneytransfer.paging.Paging;
 import com.example.moneytransfer.repository.ClientRepository;
 import com.example.moneytransfer.repository.TransactionRepository;
 import com.example.moneytransfer.repository.UserRepository;
+import com.example.moneytransfer.request.RefreshTransactionRequest;
 import com.example.moneytransfer.request.SendTransactionRequest;
 import com.example.moneytransfer.service.TransactionService;
 import com.example.moneytransfer.utils.CodeGenerator;
+import com.example.moneytransfer.utils.DateConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @Service
 @Slf4j
+@EnableScheduling
 public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
@@ -82,22 +94,31 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public List<Transaction> getAll() {
-        return transactionRepository.findAll();
+    public Paged<Transaction> getAll(int pageNum, int pageSize) {
+        PageRequest request = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "dateCreated"));
+        Page<Transaction> postPage = transactionRepository.findAll(request);
+
+        return new Paged<>(postPage, Paging.of(postPage.getTotalPages(), pageNum, pageSize));
     }
 
     @Override
-    public List<Transaction> getAllBySender(String sender) {
+    public Paged<Transaction> getAllBySender(String sender, int pageNum, int pageSize) {
         User sender1 = userRepository.findByUsername(sender)
                 .orElseThrow(() -> new RuntimeException());
-        return transactionRepository.findAllByUserSenderOrderByDateCreatedDesc(sender1);
+
+        PageRequest request = PageRequest.of(pageNum - 1, pageSize);
+        Page<Transaction> postPage = transactionRepository.findAllByUserSenderOrderByDateCreatedDesc(sender1, request);
+        return new Paged<>(postPage, Paging.of(postPage.getTotalPages(), pageNum, pageSize));
     }
 
     @Override
-    public List<Transaction> getAllByReceiver(String receiver) {
+    public Paged<Transaction> getAllByReceiver(String receiver, int pageNum, int pageSize) {
         User receiver1 = userRepository.findByUsername(receiver)
                 .orElseThrow(() -> new RuntimeException());
-        return transactionRepository.findAllByUserReceiverOrderByDateCreatedDesc(receiver1);
+
+        PageRequest request = PageRequest.of(pageNum - 1, pageSize);
+        Page<Transaction> postPage = transactionRepository.findAllByUserReceiverOrderByDateCreatedDesc(receiver1, request);
+        return new Paged<>(postPage, Paging.of(postPage.getTotalPages(), pageNum, pageSize));
     }
 
     @Override
@@ -108,6 +129,30 @@ public class TransactionServiceImpl implements TransactionService {
                     return transactionRepository.save(transaction1);
                 })
                 .orElseThrow(() -> new RuntimeException("Такой транзакции не существует"));
+    }
+
+    @Override
+    public Transaction refresh(RefreshTransactionRequest request) {
+        return transactionRepository.findByCode(request.getOldCode())
+                .map(transaction1 -> {
+                    transaction1.setStatus(Status.ACTIVE);
+                    transaction1.setDateCreated(DateConverter.convertToDateViaInstant(LocalDateTime.now()));
+                    transaction1.setCode(CodeGenerator.generate(10));
+                    return transactionRepository.save(transaction1);
+                })
+                .orElseThrow(() -> new RuntimeException("Такой транзакции не существует"));
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    public void checkExpiration() {
+        List<Transaction> allTransactions = transactionRepository.findAll();
+        for (Transaction transaction : allTransactions) {
+            if (transaction.getDateCreated().before(DateConverter.convertToDateViaInstant(LocalDateTime.now().minusMinutes(10)))
+                    && transaction.getStatus().equals(Status.valueOf("ACTIVE"))) {
+                transaction.setStatus(Status.OVERDUE);
+                transactionRepository.save(transaction);
+            }
+        }
     }
 
 }
