@@ -77,9 +77,9 @@
                     <td th:text="${transaction.senderClientNumber} + ' -> ' + ${transaction.receiverClientNumber}"></td>
                     <td th:text="${transaction.dateCreated}"></td>
                     <td>
-                        <h5 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).ACTIVE}" style="color: orange">Активный</h5>
-                        <h5 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).COMPLETE}" style="color: green">Получен</h5>
-                        <h5 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).OVERDUE}" style="color: grey">Просрочен</h5>
+                        <h6 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).ACTIVE}" style="color: orange">Активный</h6>
+                        <h6 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).COMPLETE}" style="color: green">Получен</h6>
+                        <h6 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).OVERDUE}" style="color: grey">Просрочен</h6>
                     </td>
                     <td>
                         <button th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).ACTIVE}" type="button" data-bs-toggle="modal" data-bs-target="#exampleModalCenter" class="btn btn-danger">Получить</button>
@@ -111,7 +111,7 @@
                     </li>
                 </ul>
 
-                <span style="margin-right: 20px; font-size: 18px; color: #0275d8" th:text="${'Всего ' + totalItems}">
+                <span style="margin-right: 24px; font-size: 18px; color: #0275d8" th:text="${'Всего ' + totalItems}">
                 </span>
             </nav>
         </div>

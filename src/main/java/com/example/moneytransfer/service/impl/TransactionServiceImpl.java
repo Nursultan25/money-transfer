@@ -19,14 +19,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -104,13 +104,13 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public Paged<Transaction> getAllBySender(String sender, int pageNum, int pageSize, String sortField, String sortDir) {
+    public Paged<Transaction> getAllBySender(String sender, int pageNum, int pageSize, String sortField, String sortDir, Date date1, Date date2) {
         User sender1 = userRepository.findByUsername(sender)
                 .orElseThrow(() -> new RuntimeException());
 
         PageRequest request = PageRequest.of(pageNum - 1, pageSize, sortDir.equals("asc") ? Sort.by(sortField).ascending()
                 : Sort.by(sortField).descending());
-        Page<Transaction> postPage = transactionRepository.findAllByUserSender(sender1, request);
+        Page<Transaction> postPage = transactionRepository.findAllByUserSenderAndDateCreatedBetween(sender1, date1, date2, request);
         return new Paged<>(postPage, Paging.of(postPage.getTotalPages(), pageNum, pageSize));
     }
 
@@ -148,9 +148,64 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public Long getStatistics(LocalDate date1, LocalDate date2) {
-        return transactionRepository.countByDateBetween(date1, date2);
+    public List<Transaction> getStatistics(String sender, Date date1, Date date2) throws ParseException {
+        User sender1 = userRepository.findByUsername(sender)
+                .orElseThrow(() -> new RuntimeException());
+
+        /*Date dateFrom = new SimpleDateFormat("yyyy-MM-dd").parse(date1);
+        Date dateTo = new SimpleDateFormat("yyyy-MM-dd").parse(date2);*/
+        List<Transaction> transactions = transactionRepository.findAllByUserSenderAndDateCreatedBetween(sender1, date1, date2);
+        return transactions;
     }
+
+    @Override
+    public Map<String, Long> calcTotalAmount(List<Transaction> transactions) {
+        Map<String, Long> currencyAmount = new HashMap<>();
+        long totalUsd = 0L;
+        long totalKgz = 0L;
+        long totalYtl = 0L;
+        long totalRub = 0L;
+        for (Transaction transaction : transactions) {
+            if (transaction.getCurrency().equals(Currency.USD)) {
+                totalUsd += transaction.getAmount().longValue();
+            }
+            if (transaction.getCurrency().equals(Currency.RUB)) {
+                totalRub += transaction.getAmount().longValue();
+            }
+            if (transaction.getCurrency().equals(Currency.YTL)) {
+                totalYtl += transaction.getAmount().longValue();
+            }
+            if (transaction.getCurrency().equals(Currency.KGS)) {
+                totalKgz += transaction.getAmount().longValue();
+            }
+
+        }
+        currencyAmount.put(Currency.USD.toString(), totalUsd);
+        currencyAmount.put(Currency.KGS.toString(), totalKgz);
+        currencyAmount.put(Currency.YTL.toString(), totalYtl);
+        currencyAmount.put(Currency.RUB.toString(), totalRub);
+        return currencyAmount;
+    }
+
+    /*@PostConstruct
+    public void persist() {
+        for (int i = 0; i < 10; i++) {
+            transactionRepository.save(Transaction.builder()
+                            .userSender(userRepository.findByUsername("eldar")
+                                    .orElseThrow(() -> new RuntimeException()))
+                            .userReceiver(userRepository.findByUsername("dastan")
+                                    .orElseThrow(() -> new RuntimeException()))
+                            .senderClientNumber("0999343434")
+                            .receiverClientNumber("0999565656")
+                            .code(CodeGenerator.generate(10))
+                            .status(Status.ACTIVE)
+                            .description("зарплата")
+                            .amount(BigDecimal.valueOf(1000))
+                            .currency(Currency.USD)
+                            .dateCreated(DateConverter.convertToDateViaInstant(LocalDateTime.now().minusWeeks(2)))
+                    .build());
+        }
+    }*/
 
     @Scheduled(cron = "0 * * * * *")
     public void checkExpiration() {
@@ -163,5 +218,4 @@ public class TransactionServiceImpl implements TransactionService {
             }
         }
     }
-
 }

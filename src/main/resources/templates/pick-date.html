@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <title>Home page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" ></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.min.js" integrity="sha384-Atwg2Pkwv9vp0ygtn1JAojH0nYbwNJLPhwyoVbhoPwBhjQPR5VtM2+xf0Uwh9KtT" crossorigin="anonymous"></script>
+    <link th:rel="stylesheet" th:href="@{webjars/bootstrap/4.0.0-2/css/bootstrap.min.css} "/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+</head>
+<body>
+<header th:replace="header :: navbar">
+</header>
+
+        <div class="date-picker">
+            <form style="display: flex; column-gap: 20px; align-items: center" method="post" th:action="@{/pickDates}">
+                <label>
+                    <input type="date" th:name="dateFrom">
+                </label>
+                <label>
+                    <input type="date" th:name="dateTo">
+                </label>
+                    <button class="btn btn-secondary" type="submit">Применить</button>
+                <ul style="display: flex; column-gap: 15px; list-style: none; margin-top: 15px; margin-right: 2px;
+                       border: 2px solid grey; border-radius: 2px; padding: 1px 5px" th:each="total : ${totalAmount}">
+                    <li th:text="${total.key}">hg</li>
+                    <li th:text="${total.value}">fsad</li>
+                </ul>
+            </form>
+        </div>
+
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th scope="col">Код</th>
+                <th scope="col">Сумма</th>
+                <th scope="col">Валюта</th>
+                <th scope="col">Описание</th>
+                <th scope="col">Назначение</th>
+                <th scope="col">Дата отправки</th>
+                <th scope="col">Статус</th>
+            </tr>
+            </thead>
+            <tbody th:each="transaction: ${transactions}">
+            <tr>
+                <th th:text="${transaction.code}" scope="row"></th>
+                <td th:text="${transaction.amount}"></td>
+                <td th:text="${transaction.currency}"></td>
+                <td th:text="${transaction.description}"></td>
+                <td th:text="${transaction.receiverClientNumber} + ' -> ' + ${transaction.senderClientNumber}"></td>
+                <td th:text="${transaction.dateCreated}"></td>
+                <td>
+                    <h6 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).ACTIVE}" style="color: orange">Активный</h6>
+                    <h6 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).COMPLETE}" style="color: green">Получен</h6>
+                    <h6 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).OVERDUE}" style="color: grey">Просрочен</h6>
+                    <button th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).OVERDUE}" type="button" data-bs-toggle="modal" data-bs-target="#refreshCodeModal" class="btn btn-danger">Обновить</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.5/dist/umd/popper.min.js" integrity="sha384-Xe+8cL9oJa6tN/veChSP7q+mnSPaj5Bcu9mPX5F5xIGE0DVittaqT5lorf0EI7Vk" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.min.js" integrity="sha384-kjU+l4N0Yf4ZOJErLsIcvOU2qSb74wXpOhqTvwVx3OElZRweTnQ6d31fXEoRD1Jy" crossorigin="anonymous"></script>
+<script th:src="@{/webjars/jquery/jquery.min.js}"></script>
+<script th:src="@{/webjars/popper.js/umd/popper.min.js}"></script>
+<script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+</body>
+</html>

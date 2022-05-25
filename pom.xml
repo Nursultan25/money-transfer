@@ -130,6 +130,7 @@
                 </configuration>
             </plugin>
         </plugins>
+        <finalName>money-transfer-boot</finalName>
     </build>
 
 </project>

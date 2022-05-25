@@ -19,6 +19,23 @@
         <div style="display: flex; justify-content: space-between">
             <button style="margin-bottom: 20px" type="button" data-bs-toggle="modal" data-bs-target="#exampleModalCenter" class="btn btn-success">Отправить</button>
 
+            <div class="date-picker">
+                <form style="display: flex; column-gap: 20px; align-items: center" method="post" th:action="@{/pickDates}">
+                    <label>
+                        <input type="date" th:name="dateFrom">
+                    </label>
+                    <label>
+                        <input type="date" th:name="dateTo">
+                    </label>
+                    <button class="btn btn-secondary" type="submit">Применить</button>
+                    <ul style="display: flex; column-gap: 15px; list-style: none; margin-top: 15px; margin-right: 2px;
+                           border: 2px solid grey; border-radius: 2px; padding: 1px 5px" th:each="total : ${totalAmount}">
+                        <li th:text="${total.key}"></li>
+                        <li th:text="${total.value}"></li>
+                    </ul>
+                </form>
+            </div>
+
             <div class="dropdown">
                 <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
                     Сортировать по
@@ -133,9 +150,9 @@
                 <td th:text="${transaction.receiverClientNumber} + ' -> ' + ${transaction.senderClientNumber}"></td>
                 <td th:text="${transaction.dateCreated}"></td>
                 <td>
-                    <h5 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).ACTIVE}" style="color: orange">Активный</h5>
-                    <h5 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).COMPLETE}" style="color: green">Получен</h5>
-                    <h5 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).OVERDUE}" style="color: grey">Просрочен</h5>
+                    <h6 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).ACTIVE}" style="color: orange">Активный</h6>
+                    <h6 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).COMPLETE}" style="color: green">Получен</h6>
+                    <h6 th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).OVERDUE}" style="color: grey">Просрочен</h6>
                     <button th:if="${transaction.status == T(com.example.moneytransfer.Enums.Status).OVERDUE}" type="button" data-bs-toggle="modal" data-bs-target="#refreshCodeModal" class="btn btn-danger">Обновить</button>
                 </td>
             </tr>
@@ -146,13 +163,13 @@
 
             <ul class="pagination" th:if="${transactions.page.totalPages > 1}">
                 <li class="page-item" th:classappend="${!transactions.paging.isPrevEnabled()? 'disabled' : ''}">
-                    <a class="page-link" th:href="@{'/?pageNumber=' + ${transactions.paging.pageNumber - 1} + '&sortfield=' + ${sortField} + '&sortDir=' + ${sortDir}}"
+                    <a class="page-link" th:href="@{'/?pageNumber=' + ${transactions.paging.pageNumber - 1} + '&sortField=' + ${sortField} + '&sortDir=' + ${sortDir}}"
                        tabindex="-1">Пред</a>
                 </li>
                 <th:block th:each="item : ${transactions.paging.getItems()}">
                     <li class="page-item" th:classappend="${item.index == transactions.paging.pageNumber? 'active' : ''}"
                         th:if="${item.pageItemType.name() == 'PAGE'}">
-                        <a class="page-link" th:href="@{'/?pageNumber=' + ${item.index} + '&sortfield=' + ${sortField} + '&sortDir=' + ${sortDir}}"
+                        <a class="page-link" th:href="@{'/?pageNumber=' + ${item.index} + '&sortField=' + ${sortField} + '&sortDir=' + ${sortDir}}"
                            th:text="${item.index}"></a>
                     </li>
                     <li class="page-item disabled" th:if="${item.pageItemType.name() == 'DOTS'}">
@@ -160,7 +177,7 @@
                     </li>
                 </th:block>
                 <li class="page-item" th:classappend="${!transactions.paging.isNextEnabled()? 'disabled' : ''}">
-                    <a class="page-link" th:href="@{'/?pageNumber=' + ${transactions.paging.pageNumber + 1} + '&sortfield=' + ${sortField} + '&sortDir=' + ${sortDir}}">След</a>
+                    <a class="page-link" th:href="@{'/?pageNumber=' + ${transactions.paging.pageNumber + 1} + '&sortField=' + ${sortField} + '&sortDir=' + ${sortDir}}">След</a>
                 </li>
             </ul>
 

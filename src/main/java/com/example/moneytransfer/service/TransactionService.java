@@ -6,8 +6,11 @@ import com.example.moneytransfer.request.RefreshTransactionRequest;
 import com.example.moneytransfer.request.SendTransactionRequest;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public interface TransactionService {
@@ -18,7 +21,7 @@ public interface TransactionService {
 
     Paged<Transaction> getAll(int pageNum, int pageSize, String sortField, String sortDir);
 
-    Paged<Transaction> getAllBySender(String sender, int pageNum, int pageSize, String sortField, String sortDir);
+    Paged<Transaction> getAllBySender(String sender, int pageNum, int pageSize, String sortField, String sortDir, Date date1, Date date2);
 
     Paged<Transaction> getAllByReceiver(String receiver, int pageNum, int pageSize, String sortField, String sortDir);
 
@@ -26,5 +29,7 @@ public interface TransactionService {
 
     Transaction refresh(RefreshTransactionRequest request);
 
-    Long getStatistics(LocalDate date1, LocalDate date2);
+    List<Transaction> getStatistics(String sender, Date date1, Date date2) throws ParseException;
+
+    Map<String, Long> calcTotalAmount(List<Transaction> transactions);
 }

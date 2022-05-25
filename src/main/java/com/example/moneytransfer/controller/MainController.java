@@ -6,18 +6,22 @@ import com.example.moneytransfer.request.RefreshTransactionRequest;
 import com.example.moneytransfer.request.SendTransactionRequest;
 import com.example.moneytransfer.request.UpdateStatusRequest;
 import com.example.moneytransfer.service.TransactionService;
+import com.example.moneytransfer.utils.DateConverter;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.KeycloakSecurityContext;
-import org.springframework.data.domain.Page;
-import org.springframework.data.repository.query.Param;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @Controller
@@ -26,18 +30,6 @@ public class MainController {
 
     private final HttpServletRequest request;
     private final TransactionService transactionService;
-
-    @RolesAllowed("USER_ROLE")
-    @GetMapping("/")
-    public String sendPage(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
-                           @RequestParam(value = "size", required = false, defaultValue = "6") int size,
-                           @RequestParam(value = "sortField", defaultValue = "dateCreated") String sortField,
-                           @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
-                           Model model) {
-        model.addAttribute("sendTrReq", new SendTransactionRequest());
-        model.addAttribute("refreshReq", new RefreshTransactionRequest());
-        return sent(pageNumber, size, sortField, sortDir,model);
-    }
 
     @PostMapping("/sendForm")
     public String sendForm(@Valid @ModelAttribute SendTransactionRequest sendTrReq) {
@@ -54,7 +46,7 @@ public class MainController {
     @GetMapping("/received")
     public String received(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
                            @RequestParam(value = "size", required = false, defaultValue = "6") int size,
-                           @RequestParam(value = "sortField", defaultValue = "dateCreated") String sortField,
+                           @RequestParam(value = "sortField", defaultValue = "amount") String sortField,
                            @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
                            Model model) {
         configCommonAttributes(model);
@@ -66,14 +58,52 @@ public class MainController {
         return "transactions-received";
     }
 
-    @GetMapping("/sent")
+    @RolesAllowed("USER_ROLE")
+    @GetMapping("/")
     public String sent(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
                        @RequestParam(value = "size", required = false, defaultValue = "6") int size,
                        @RequestParam(value = "sortField", defaultValue = "dateCreated") String sortField,
                        @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
                        Model model) {
         configCommonAttributes(model);
-        Paged<Transaction> paged = transactionService.getAllBySender(getKeycloakSecurityContext().getToken().getPreferredUsername(), pageNumber, size, sortField, sortDir);
+        Paged<Transaction> paged = transactionService.getAllBySender(getKeycloakSecurityContext().getToken().getPreferredUsername(),
+                pageNumber, size, sortField, sortDir,
+                DateConverter.convertToDateViaInstant(LocalDateTime.now().minusMonths(1)),
+                DateConverter.convertToDateViaInstant(LocalDateTime.now()));
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
+        model.addAttribute("transactions", paged);
+        model.addAttribute("totalItems", paged.getPage().getTotalElements());
+        model.addAttribute("sendTrReq", new SendTransactionRequest());
+        model.addAttribute("refreshReq", new RefreshTransactionRequest());
+        model.addAttribute("totalAmount", transactionService.calcTotalAmount(paged.getPage().getContent()));
+        return "transactions-sent";
+    }
+
+    @GetMapping("/pick")
+    public String getStatistics(Model model) throws ParseException {
+        List<Transaction> transactions = transactionService.getStatistics(getKeycloakSecurityContext().getToken().getPreferredUsername(),
+                DateConverter.convertToDateViaInstant(LocalDateTime.now().minusMonths(1)),
+                DateConverter.convertToDateViaInstant(LocalDateTime.now()));
+        model.addAttribute("transactions", transactions);
+        model.addAttribute("totalAmount", transactionService.calcTotalAmount(transactions));
+        return "pick-date";
+    }
+
+    @PostMapping("/pickDates")
+    public String getStatistics(@RequestParam(value = "dateFrom") @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateFrom,
+                                @RequestParam(value = "dateTo") @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateTo,
+                                @RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
+                                @RequestParam(value = "size", required = false, defaultValue = "6") int size,
+                                @RequestParam(value = "sortField", defaultValue = "dateCreated") String sortField,
+                                @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
+                                Model model) {
+        Paged<Transaction> paged = transactionService.getAllBySender(getKeycloakSecurityContext().getToken().getPreferredUsername(),
+                pageNumber, size, sortField, sortDir, dateFrom, dateTo);
+        model.addAttribute("transactions", paged);
+        model.addAttribute("totalAmount", transactionService.calcTotalAmount(paged.getPage().getContent()));
+        model.addAttribute("sendTrReq", new SendTransactionRequest());
+        model.addAttribute("refreshReq", new RefreshTransactionRequest());
         model.addAttribute("sortField", sortField);
         model.addAttribute("sortDir", sortDir);
         model.addAttribute("transactions", paged);
@@ -98,6 +128,7 @@ public class MainController {
         Paged<Transaction> paged = transactionService.getAll(pageNumber, size, sortField, sortDir);
         model.addAttribute("sortField", sortField);
         model.addAttribute("sortDir", sortDir);
+
         model.addAttribute("totalItems", paged.getPage().getTotalElements());
         model.addAttribute("request", new UpdateStatusRequest());
         model.addAttribute("transactions", paged);
