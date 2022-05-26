@@ -8,8 +8,6 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
             <div class="navbar-nav">
-                <a th:if="${#authorization.expression('hasRole(''USER_ROLE'')')}" class="nav-link" href="/">Отправленные</a>
-                <a th:if="${#authorization.expression('hasRole(''USER_ROLE'')')}" class="nav-link" href="/received">Входящие</a>
                 <a th:if="${#authorization.expression('hasRole(''ADMIN_ROLE'')')}" class="nav-link" href="/admin-console">Консоль</a>
             </div>
         </div>

@@ -15,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long>, JpaSpecificationExecutor<Transaction> {
     Optional<Transaction> findByCode(String code);
-    Page<Transaction> findAllByUserSenderAndDateCreatedBetween(User sender, Date date1, Date date2, Pageable pageRequest);
+    Page<Transaction> findAllByUserSenderOrUserReceiverAndDateCreatedBetween(User sender, User receiver, Date date1, Date date2, Pageable pageRequest);
     Page<Transaction> findAllByUserReceiver(User receiver, Pageable pageRequest);
     List<Transaction> findAllByUserSenderAndDateCreatedBetween(User sender, Date date1, Date date2);
 }

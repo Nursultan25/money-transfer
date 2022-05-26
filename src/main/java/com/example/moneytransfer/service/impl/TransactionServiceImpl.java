@@ -110,7 +110,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         PageRequest request = PageRequest.of(pageNum - 1, pageSize, sortDir.equals("asc") ? Sort.by(sortField).ascending()
                 : Sort.by(sortField).descending());
-        Page<Transaction> postPage = transactionRepository.findAllByUserSenderAndDateCreatedBetween(sender1, date1, date2, request);
+        Page<Transaction> postPage = transactionRepository.findAllByUserSenderOrUserReceiverAndDateCreatedBetween(sender1, sender1, date1, date2, request);
         return new Paged<>(postPage, Paging.of(postPage.getTotalPages(), pageNum, pageSize));
     }
 

@@ -43,25 +43,10 @@ public class MainController {
         return "redirect:/";
     }
 
-    @GetMapping("/received")
-    public String received(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
-                           @RequestParam(value = "size", required = false, defaultValue = "6") int size,
-                           @RequestParam(value = "sortField", defaultValue = "amount") String sortField,
-                           @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
-                           Model model) {
-        configCommonAttributes(model);
-        Paged<Transaction> paged = transactionService.getAllByReceiver(getKeycloakSecurityContext().getToken().getPreferredUsername(), pageNumber, size, sortField, sortDir);
-        model.addAttribute("transactions", paged);
-        model.addAttribute("sortField", sortField);
-        model.addAttribute("sortDir", sortDir);
-        model.addAttribute("totalItems", paged.getPage().getTotalElements());
-        return "transactions-received";
-    }
-
     @RolesAllowed("USER_ROLE")
     @GetMapping("/")
     public String sent(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
-                       @RequestParam(value = "size", required = false, defaultValue = "6") int size,
+                       @RequestParam(value = "size", required = false, defaultValue = "10") int size,
                        @RequestParam(value = "sortField", defaultValue = "dateCreated") String sortField,
                        @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
                        Model model) {
@@ -83,21 +68,11 @@ public class MainController {
         return "transactions-sent";
     }
 
-    @GetMapping("/pick")
-    public String getStatistics(Model model) throws ParseException {
-        List<Transaction> transactions = transactionService.getStatistics(getKeycloakSecurityContext().getToken().getPreferredUsername(),
-                DateConverter.convertToDateViaInstant(LocalDateTime.now().minusMonths(1)),
-                DateConverter.convertToDateViaInstant(LocalDateTime.now()));
-        model.addAttribute("transactions", transactions);
-        model.addAttribute("totalAmount", transactionService.calcTotalAmount(transactions));
-        return "pick-date";
-    }
-
     @GetMapping("/pickDates")
     public String getStatistics(@RequestParam(value = "dateFrom") @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateFrom,
                                 @RequestParam(value = "dateTo") @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateTo,
                                 @RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
-                                @RequestParam(value = "size", required = false, defaultValue = "6") int size,
+                                @RequestParam(value = "size", required = false, defaultValue = "10") int size,
                                 @RequestParam(value = "sortField", defaultValue = "dateCreated") String sortField,
                                 @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
                                 Model model) {
@@ -128,7 +103,7 @@ public class MainController {
     @RolesAllowed("ADMIN_ROLE")
     @GetMapping("/admin-console")
     public String getAllTransactions(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
-                                     @RequestParam(value = "size", required = false, defaultValue = "6") int size,
+                                     @RequestParam(value = "size", required = false, defaultValue = "10") int size,
                                      @RequestParam(value = "sortField", defaultValue = "dateCreated") String sortField,
                                      @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
                                      Model model) {
