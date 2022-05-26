@@ -148,12 +148,9 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public List<Transaction> getStatistics(String sender, Date date1, Date date2) throws ParseException {
+    public List<Transaction> getStatistics(String sender, Date date1, Date date2) {
         User sender1 = userRepository.findByUsername(sender)
                 .orElseThrow(() -> new RuntimeException());
-
-        /*Date dateFrom = new SimpleDateFormat("yyyy-MM-dd").parse(date1);
-        Date dateTo = new SimpleDateFormat("yyyy-MM-dd").parse(date2);*/
         List<Transaction> transactions = transactionRepository.findAllByUserSenderAndDateCreatedBetween(sender1, date1, date2);
         return transactions;
     }

@@ -20,7 +20,7 @@
             <button style="margin-bottom: 20px" type="button" data-bs-toggle="modal" data-bs-target="#exampleModalCenter" class="btn btn-success">Отправить</button>
 
             <div class="date-picker">
-                <form style="display: flex; column-gap: 20px; align-items: center" method="post" th:action="@{/pickDates}">
+                <form style="display: flex; column-gap: 20px; align-items: center" method="get" th:action="@{/pickDates}">
                     <label>
                         <input type="date" th:name="dateFrom">
                     </label>
@@ -41,10 +41,10 @@
                     Сортировать по
                 </button>
                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                    <a class="dropdown-item" th:href="@{'/?pageNumber=' + ${transactions.paging.pageNumber} + '&sortField=amount&sortDir=asc'}">Сумма по возр</a>
-                    <a class="dropdown-item" th:href="@{'/?pageNumber=' + ${transactions.paging.pageNumber} + '&sortField=amount&sortDir=desc'}">Сумма по убыв</a>
-                    <a class="dropdown-item" th:href="@{'/?pageNumber=' + ${transactions.paging.pageNumber} + '&sortField=dateCreated&sortDir=asc'}">Дата по возр</a>
-                    <a class="dropdown-item" th:href="@{'/?pageNumber=' + ${transactions.paging.pageNumber} + '&sortField=dateCreated&sortDir=desc'}">Дата по убыв</a>
+                    <a class="dropdown-item" th:href="@{'/pickDates/?pageNumber=' + ${transactions.paging.pageNumber} + '&sortField=amount&sortDir=asc'}">Сумма по возр</a>
+                    <a class="dropdown-item" th:href="@{'/pickDates/?pageNumber=' + ${transactions.paging.pageNumber} + '&sortField=amount&sortDir=desc'}">Сумма по убыв</a>
+                    <a class="dropdown-item" th:href="@{'/pickDates/?pageNumber=' + ${transactions.paging.pageNumber} + '&sortField=dateCreated&sortDir=asc'}">Дата по возр</a>
+                    <a class="dropdown-item" th:href="@{'/pickDates/?pageNumber=' + ${transactions.paging.pageNumber} + '&sortField=dateCreated&sortDir=desc'}">Дата по убыв</a>
                 </div>
             </div>
         </div>

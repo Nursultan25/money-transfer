@@ -66,6 +66,9 @@ public class MainController {
                        @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
                        Model model) {
         configCommonAttributes(model);
+        List<Transaction> allTransactions = transactionService.getStatistics(getKeycloakSecurityContext().getToken().getPreferredUsername(),
+                DateConverter.convertToDateViaInstant(LocalDateTime.now().minusMonths(1)),
+                DateConverter.convertToDateViaInstant(LocalDateTime.now()));
         Paged<Transaction> paged = transactionService.getAllBySender(getKeycloakSecurityContext().getToken().getPreferredUsername(),
                 pageNumber, size, sortField, sortDir,
                 DateConverter.convertToDateViaInstant(LocalDateTime.now().minusMonths(1)),
@@ -76,7 +79,7 @@ public class MainController {
         model.addAttribute("totalItems", paged.getPage().getTotalElements());
         model.addAttribute("sendTrReq", new SendTransactionRequest());
         model.addAttribute("refreshReq", new RefreshTransactionRequest());
-        model.addAttribute("totalAmount", transactionService.calcTotalAmount(paged.getPage().getContent()));
+        model.addAttribute("totalAmount", transactionService.calcTotalAmount(allTransactions));
         return "transactions-sent";
     }
 
@@ -90,7 +93,7 @@ public class MainController {
         return "pick-date";
     }
 
-    @PostMapping("/pickDates")
+    @GetMapping("/pickDates")
     public String getStatistics(@RequestParam(value = "dateFrom") @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateFrom,
                                 @RequestParam(value = "dateTo") @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateTo,
                                 @RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
@@ -98,14 +101,19 @@ public class MainController {
                                 @RequestParam(value = "sortField", defaultValue = "dateCreated") String sortField,
                                 @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
                                 Model model) {
+        configCommonAttributes(model);
         Paged<Transaction> paged = transactionService.getAllBySender(getKeycloakSecurityContext().getToken().getPreferredUsername(),
                 pageNumber, size, sortField, sortDir, dateFrom, dateTo);
+        List<Transaction> allTransactions = transactionService.getStatistics(getKeycloakSecurityContext().getToken().getPreferredUsername(),
+                dateFrom, dateTo);
         model.addAttribute("transactions", paged);
-        model.addAttribute("totalAmount", transactionService.calcTotalAmount(paged.getPage().getContent()));
+        model.addAttribute("totalAmount", transactionService.calcTotalAmount(allTransactions));
         model.addAttribute("sendTrReq", new SendTransactionRequest());
         model.addAttribute("refreshReq", new RefreshTransactionRequest());
         model.addAttribute("sortField", sortField);
         model.addAttribute("sortDir", sortDir);
+        model.addAttribute("dateFrom", dateFrom);
+        model.addAttribute("dateTo", dateTo);
         model.addAttribute("transactions", paged);
         model.addAttribute("totalItems", paged.getPage().getTotalElements());
         return "transactions-sent";

@@ -29,7 +29,7 @@ public interface TransactionService {
 
     Transaction refresh(RefreshTransactionRequest request);
 
-    List<Transaction> getStatistics(String sender, Date date1, Date date2) throws ParseException;
+    List<Transaction> getStatistics(String sender, Date date1, Date date2);
 
     Map<String, Long> calcTotalAmount(List<Transaction> transactions);
 }
